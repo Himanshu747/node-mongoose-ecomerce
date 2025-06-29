@@ -4,7 +4,9 @@ const Product = require("../models/product");
 
 
 exports.getAddProduct = (req,res,next) => {
-   
+      if(!req.session.isLoggedIn){
+            return res.redirect('/login');
+      }
     res.render('admin/edit-product',{
                 docTitle:'Add New Product',
                 path:'/admin/add-product',
@@ -23,7 +25,8 @@ exports.postAddProduct= (req,res,next)=>{
             price:price,
             description:description,
             imageUrl:imageUrl,
-            userId:req.user._id
+            userId:req.user
+           
       });
       product.save().then(result=>{
          //   console.log(result);
@@ -67,7 +70,6 @@ exports.getEditProduct = (req,res,next) => {
       // req.user.getProducts({where:{id:prodId}})
       // .then(products=>{
      Product.findById(prodId).then(products=>{
-   
       const product=products;
             if(!product){
                   return res.redirect("/");
@@ -76,8 +78,7 @@ exports.getEditProduct = (req,res,next) => {
                   docTitle:'Edit Product',
                   path:'/admin/add-product',
                   editing:editMode,
-                  product:product,
-                  isAuthenticated:req.isLoggedIn
+                  product:product
                 });
       })
       .catch(error=>{
@@ -95,14 +96,17 @@ exports.postEditProduct =(req,res,next)=>{
       const updatedDesc=req.body.description;
 
       Product.findById(prodId).then(product=>{
+            if(product.userId!==req.user._id){
+                  return res.redirect('/');
+            }
             product.title=updatedTitle;
             product.price=updatedPrice;
             product.description=updatedDesc;
             product.imageUrl=updatedImageUrl;
-            return product.save();
-      }).then(result=>{
+            return product.save().then(result=>{
             console.log('Updated Product Successfully');
             res.redirect('/admin/products');
+      });
       })
       .catch(error=>{
             console.log('error is calling');
@@ -130,7 +134,7 @@ exports.postEditProduct =(req,res,next)=>{
 
 exports.getProducts=(req,res,next)=>{
             // req.user.getProducts()
-      Product.find()
+      Product.find({userId:req.user._id})
       // .select('title price -_id')
       // .populate('userId','name')
       .populate('userId')
@@ -139,8 +143,7 @@ exports.getProducts=(req,res,next)=>{
             res.render('admin/products',{
                   prod:products,
                   docTitle:'Admin Products',
-                  path:'/admin/products',
-                  isAuthenticated:req.isLoggedIn
+                  path:'/admin/products'
             });  
       })
       .catch(error=>{

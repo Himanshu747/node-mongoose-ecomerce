@@ -7,8 +7,7 @@ exports.getProducts = (req,res,next)=>{
             res.render('shop/product-list',{
                   prod:products,
                   docTitle:'Admin Products',
-                  path:'/products',
-                   isAuthenticated:req.isLoggedIn
+                  path:'/products'
             });  
       });
 };
@@ -18,7 +17,7 @@ exports.getProduct= (req,res,next)=>{
 
      Product.findById(productId)
       .then(products =>{
-            res.render('shop/product-details',{product:products,docTitle:products.title,path:'/products',   isAuthenticated:req.isLoggedIn});
+            res.render('shop/product-details',{product:products,docTitle:products.title,path:'/products',   isAuthenticated:req.session.isLoggedIn});
       })
       .catch(error=>{console.log(error)});
 }
@@ -29,8 +28,7 @@ exports.getIndex=(req,res,next)=>{
             res.render('shop/index',{
                   prod:product,
                   docTitle:'Shop',
-                  path:'/',
-                  isAuthenticated:req.isLoggedIn
+                  path:'/'
             });
       })
       .catch(error=>{
@@ -49,8 +47,7 @@ exports.getCart=(req,res,next)=>{
                               {
                                           path:'/cart',
                                           docTitle:'Your Cart',
-                                          products:products,
-                                          isAuthenticated:req.isLoggedIn
+                                          products:products
                               });
             
             
@@ -94,7 +91,7 @@ req.user
             });
             const order=new Order({
                         user:{
-                              name:req.user.name,
+                              name:req.user.email,
                               userId:req.user
                         },
                         products:products
@@ -117,8 +114,7 @@ exports.getOrders=(req,res,next)=>{
             res.render('shop/orders',{
                   path:'/orders',
                   docTitle:'Your Orders',
-                  orders:orders,
-                  isAuthenticated:req.isLoggedIn
+                  orders:orders
             });
       })
       .catch(err=>{
