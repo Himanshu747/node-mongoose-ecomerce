@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const User = require("../models/user");
 const nodemailer = require("nodemailer");
 const sendgridTransport = require("nodemailer-sendgrid-transport");
-
+const {validationResult}=require('express-validator');
 // const transporter=nodemailer.createTransport(sendgridTransport({
 //   auth::{
 //     api_user:,
@@ -21,20 +21,35 @@ exports.getSignup = (req, res, next) => {
     path: "/signup",
     docTitle: "Signup",
     errorMessage: message,
+     oldInput:{
+        email:'',
+        password:'',
+        confirmPassword:''
+      },
+       validationErrors:[]
   });
 };
 exports.postSignup = (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
   const confirmPassword = req.body.confirmPassword;
+  const errors=validationResult(req);
+  if(!errors.isEmpty()){
+    console.log(errors.array());
+    return res.status(422).render("auth/signup", {
+      path: "/signup",
+      docTitle: "Signup",
+      errorMessage: errors.array()[0].msg,
+      oldInput:{
+        email:email,
+        password:password,
+        confirmPassword:req.body.confirmPassword
+      },
+      validationErrors:errors.array()
+    });
+  }
 
-  User.findOne({ email: email })
-    .then((userDoc) => {
-      if (userDoc) {
-        req.flash("error", "Email already exist");
-        return res.redirect("/signup");
-      }
-      return bcrypt
+       bcrypt
         .hash(password, 12)
         .then((hashedPassword) => {
           const user = new User({
@@ -46,8 +61,7 @@ exports.postSignup = (req, res, next) => {
         })
         .then((result) => {
           res.redirect("/login");
-        });
-    })
+        })
     .catch((err) => {
       console.log(err);
     });
@@ -78,7 +92,15 @@ exports.postLogin = (req, res, next) => {
   req.isLoggedIn = true;
   const email = req.body.email;
   const password = req.body.password;
-
+  const errors=validationResult(req);
+  if(!errors.isEmpty()){
+     return res.status(422).render("auth/login", {
+    path: "/login",
+    docTitle: "Login",
+    errorMessage: errors.array()[0].msg
+   
+  });
+  }
   User.findOne({ email: email })
     .then((user) => {
       if (!user) {
